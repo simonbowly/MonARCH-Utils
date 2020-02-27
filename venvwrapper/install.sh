@@ -6,6 +6,8 @@ for fname in activate.patch mkvirtualenv venvwrapper.sh; do
     curl -sSf ${URLBASE}/${fname} --output ${INSTALL_DIR}/${fname}
 done
 
+chmod +x ${INSTALL_DIR}/mkvirtualenv
+
 echo "Done! Scripts installed to ${INSTALL_DIR}."
 echo "Run 'source ${INSTALL_DIR}/venvwrapper.sh' from your shell"
 echo "to start using the scripts now, or add to your .bashrc to load on login"
