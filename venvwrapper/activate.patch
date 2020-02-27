@@ -1,0 +1,47 @@
+--- activate.orig	2020-02-26 23:44:33.994428242 +1100
++++ activate	2020-02-26 23:46:09.254706184 +1100
+@@ -2,6 +2,14 @@
+ # you cannot run it directly
+ 
+ deactivate () {
++
++    # Reset PYTHONPATH to its old value
++    if [ -n "${_OLD_VIRTUAL_PYTHONPATH:-}" ] ; then
++        PYTHONPATH="${_OLD_VIRTUAL_PYTHONPATH:-}"
++        export PYTHONPATH
++        unset _OLD_VIRTUAL_PYTHONPATH
++    fi
++
+     # reset old environment variables
+     if [ -n "${_OLD_VIRTUAL_PATH:-}" ] ; then
+         PATH="${_OLD_VIRTUAL_PATH:-}"
+@@ -27,6 +35,11 @@
+         unset _OLD_VIRTUAL_PS1
+     fi
+ 
++    # Run custom postdeactivate script
++    if [ -n "${VIRTUAL_ENV:-}" ] ; then
++        source $VIRTUAL_ENV/bin/postdeactivate
++    fi
++
+     unset VIRTUAL_ENV
+     if [ ! "${1:-}" = "nondestructive" ] ; then
+     # Self destruct!
+@@ -40,10 +53,17 @@
+ VIRTUAL_ENV="/home/simon/virtualenvs/tmp"
+ export VIRTUAL_ENV
+ 
++# Run custom preactivate script
++source $VIRTUAL_ENV/bin/preactivate
++
+ _OLD_VIRTUAL_PATH="$PATH"
+ PATH="$VIRTUAL_ENV/bin:$PATH"
+ export PATH
+ 
++_OLD_VIRTUAL_PYTHONPATH="$PYTHONPATH"
++PYTHONPATH=$(paste -s -d: ${VIRTUAL_ENV}/pythonpaths)
++export PYTHONPATH
++
+ # unset PYTHONHOME if set
+ # this will fail if PYTHONHOME is set to the empty string (which is bad anyway)
+ # could use `if (set -u; : $PYTHONHOME) ;` in bash

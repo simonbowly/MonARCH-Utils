@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+
+set -e
+
+THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+VIRTUAL_DIR_PATH="$HOME/virtualenvs/"
+
+PYSPEC=""       # --python option
+GUROBI=""       # --gurobi option
+INTERPRETER=""  # full path to selected interpreter
+
+##### Check input arguments and show help if we get confused
+
+OKAY="true"
+for i in "$@"
+do
+case $i in
+    -p=*|--python=*)
+    PYSPEC="${i#*=}"
+    shift # past argument=value
+    ;;
+    --gurobi=*)
+    GUROBI="${i#*=}"
+    shift # past argument=value
+    ;;
+    *)
+    if [ -z "$NAME" ]; then
+        NAME=${1}
+        shift
+    else
+        unset OKAY
+    fi
+    ;;
+esac
+done
+
+if [ -z $OKAY ] || [ -z $NAME ]; then
+    # Show help if the script was invoked incorrectly.
+    echo "Usage: mkvirtualenv [options] NAME"
+    echo
+    echo "Options:"
+    echo "    --python=version      # Specify a version or executable"
+    echo "    --gurobi=version      # Switch includes gurobipy on PYTHONPATH"
+    echo
+    echo "Examples:"
+    echo "    # Virtualenv with latest available python3 interpreter"
+    echo "    mkvirtualenv my_venv"
+    echo "    # Virtualenv with specific interpreter version"
+    echo "    mkvirtualenv --python=3.6 py36"
+    echo "    # Virtualenv with the appropriate version of gurobipy"
+    echo "    mkvirtualenv --gurobi=9 --python=3.7 py37_gurobi9"
+    exit 1
+fi
+
+##### Check we're not overwriting another virtualenv
+
+DIRECTORY=${VIRTUAL_DIR_PATH}${NAME}
+if [ -d ${DIRECTORY} ]; then
+    echo "Error: Virtual environment ${NAME} already exists"
+    exit 1
+fi
+
+##### Locate an appropriate python3 interpreter
+
+PYTHON_MODULE=$(module avail python/${PYSPEC} --terse 2>&1 | grep -E python.*gcc | sort | tail -n 1)
+echo "Loading module ${PYTHON_MODULE}"
+module load ${PYTHON_MODULE}
+INTERPRETER=$(which python3)
+if [ -z $INTERPRETER ]; then
+    echo "Error: failed to find a python3 interpreter"
+    exit 1
+else
+    echo "Using interpreter ${INTERPRETER} ($(${INTERPRETER} --version))"
+fi
+
+##### Create virtualenv, update packaging tools, apply patches
+
+${INTERPRETER} -m venv ${DIRECTORY}
+unset PYTHONPATH
+echo "Updating packaging tools"
+${DIRECTORY}/bin/python -m pip install pip setuptools wheel --upgrade
+VERSION=$(${DIRECTORY}/bin/python --version)
+echo "Python version in environment: $VERSION"
+
+touch ${DIRECTORY}/pythonpaths
+patch -b ${DIRECTORY}/bin/activate ${THIS_DIR}/activate.patch
+
+# Add python module load/unload to activation scripts
+echo module load ${PYTHON_MODULE} >> ${DIRECTORY}/bin/preactivate
+echo module unload ${PYTHON_MODULE} >> ${DIRECTORY}/bin/postdeactivate
+
+# Add gurobipy path and module load/unload if required
+if [ -n "${GUROBI}" ]; then
+    GUROBI_MODULE=$(module avail gurobi/${GUROBI_VERSION} --terse 2>&1 | grep gurobi | sort | tail -n 1)
+    echo "Loading module ${GUROBI_MODULE}"
+    module load ${GUROBI_MODULE}
+    if [ -z $GUROBI_HOME ]; then
+        echo "GUROBI_HOME needs to be set to locate the installation"
+    else
+        pymajorversion=$(${INTERPRETER} -c "import sys; v = sys.version_info; print(str(v.major)+'.'+str(v.minor))")
+        gurobipy_path="${GUROBI_HOME}/lib/python${pymajorversion}_utf32"
+        echo $gurobipy_path >> ${DIRECTORY}/pythonpaths
+        echo "Added ${gurobipy_path} to venv PYTHONPATH"
+        echo module load ${GUROBI_MODULE} >> ${DIRECTORY}/bin/preactivate
+        echo module unload ${GUROBI_MODULE} >> ${DIRECTORY}/bin/postdeactivate
+    fi
+fi
+
+echo "Use 'workon ${NAME}' or 'source ${DIRECTORY}/bin/activate' to activate"
