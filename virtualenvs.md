@@ -1,4 +1,13 @@
 
+# TL;DR
+
+* The `module` system for using Python on MonARCH clashes with virtualenvs and makes installing/upgrading packages tricky (especially gurobipy)
+* These `venvwrapper` scripts create virtualenvs that also load the required modules and fix import paths so things don't break (and they're pure bash scripts that don't depend on libraries missing from MonARCH's python installations)
+
+```
+curl -sSf https://raw.githubusercontent.com/simonbowly/MonARCH-Utils/master/venvwrapper/install.sh | bash
+```
+
 # Python virtualenvs
 
 These can be kind of annoying as a result of the module system used on the cluster.
