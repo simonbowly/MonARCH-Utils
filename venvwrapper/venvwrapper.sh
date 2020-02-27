@@ -1,11 +1,11 @@
 # Lightweight virtualenvwrapper (mkvirtualenv/workon/rmvirtualenv)
 # Uses some bits of setV (psachin.gitlab.io)
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-
-VIRTUAL_DIR_PATH="$HOME/virtualenvs/"
+export VIRTUAL_DIR_PATH="$HOME/virtualenvs/"
 mkdir -p $VIRTUAL_DIR_PATH
-export PATH="$DIR:$PATH"
+
+# Add these scripts to the path
+export PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd ):$PATH"
 
 function _setvcomplete_()
 {
@@ -46,7 +46,9 @@ function rmvirtualenv() {
         then
             read -p "Really delete this virtual environment(Y/N)? " yes_no
             case $yes_no in
-            Y|y) rm -rf ${VIRTUAL_DIR_PATH}${1};;
+            Y|y) rm -rf ${VIRTUAL_DIR_PATH}${1}
+            echo "${VIRTUAL_DIR_PATH}${1} deleted."
+            ;;
             N|n) echo "Leaving the virtual environment as it is.";;
             *) echo "You need to enter either Y/y or N/n"
             esac

@@ -3,7 +3,6 @@
 set -e
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-VIRTUAL_DIR_PATH="$HOME/virtualenvs/"
 
 PYSPEC=""       # --python option
 GUROBI=""       # --gurobi option
@@ -39,8 +38,8 @@ if [ -z $OKAY ] || [ -z $NAME ]; then
     echo "Usage: mkvirtualenv [options] NAME"
     echo
     echo "Options:"
-    echo "    --python=version      # Specify a version or executable"
-    echo "    --gurobi=version      # Switch includes gurobipy on PYTHONPATH"
+    echo "    --python=version"
+    echo "    --gurobi=version"
     echo
     echo "Examples:"
     echo "    # Virtualenv with latest available python3 interpreter"
@@ -82,14 +81,12 @@ ${DIRECTORY}/bin/python -m pip install pip setuptools wheel --upgrade
 VERSION=$(${DIRECTORY}/bin/python --version)
 echo "Python version in environment: $VERSION"
 
+echo module load ${PYTHON_MODULE} >> ${DIRECTORY}/bin/preactivate
+echo module unload ${PYTHON_MODULE} >> ${DIRECTORY}/bin/postdeactivate
 touch ${DIRECTORY}/pythonpaths
 patch -b ${DIRECTORY}/bin/activate ${THIS_DIR}/activate.patch
 
-# Add python module load/unload to activation scripts
-echo module load ${PYTHON_MODULE} >> ${DIRECTORY}/bin/preactivate
-echo module unload ${PYTHON_MODULE} >> ${DIRECTORY}/bin/postdeactivate
-
-# Add gurobipy path and module load/unload if required
+# Add gurobipy support if requested
 if [ -n "${GUROBI}" ]; then
     GUROBI_MODULE=$(module avail gurobi/${GUROBI_VERSION} --terse 2>&1 | grep gurobi | sort | tail -n 1)
     echo "Loading module ${GUROBI_MODULE}"
