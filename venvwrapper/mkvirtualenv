@@ -68,8 +68,10 @@ fi
 
 ##### Locate an appropriate python3 interpreter
 
-INTERPRETER=$(which ${PYSPEC})
-if [ -n $INTERPRETER ]; then
+set +e
+INTERPRETER=$(which ${PYSPEC} 2>/dev/null)
+set -e
+if [ -n "${INTERPRETER}" ]; then
     # Use a locally installed python insteady of a version spec
     if [ -z "${GCCSPEC}" ]; then
         echo "A gcc version (--gcc=version flag) must be specified when using a local python install"
@@ -82,7 +84,9 @@ else
     PYTHON_MODULE=$(module avail python/${PYSPEC} --terse 2>&1 | grep -E python.*gcc | sort | tail -n 1)
     echo "Loading module ${PYTHON_MODULE}"
     module load ${PYTHON_MODULE}
-    INTERPRETER=$(which python3)
+    set +e
+    INTERPRETER=$(which python3 2>/dev/null)
+    set -e
     if [ -z $INTERPRETER ]; then
         echo "Error: failed to find a python3 interpreter"
         exit 1
