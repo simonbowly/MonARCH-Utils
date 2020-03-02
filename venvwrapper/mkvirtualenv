@@ -18,6 +18,10 @@ case $i in
     PYSPEC="${i#*=}"
     shift # past argument=value
     ;;
+    --gcc=*)
+    GCCSPEC="${i#*=}"
+    shift # past argument=value
+    ;;
     --gurobi=*)
     GUROBI="${i#*=}"
     shift # past argument=value
@@ -40,6 +44,7 @@ if [ -z $OKAY ] || [ -z $NAME ]; then
     echo "Options:"
     echo "    --python=version"
     echo "    --gurobi=version"
+    echo "    --gcc=version"
     echo
     echo "Examples:"
     echo "    # Virtualenv with latest available python3 interpreter"
@@ -48,6 +53,8 @@ if [ -z $OKAY ] || [ -z $NAME ]; then
     echo "    mkvirtualenv --python=3.6 py36"
     echo "    # Virtualenv with the appropriate version of gurobipy"
     echo "    mkvirtualenv --gurobi=9 --python=3.7 py37_gurobi9"
+    echo "    # A locally installed python built with a gcc module"
+    echo "    mkvirtualenv --gurobi=9 --python=/path/to/python --gcc=8 my_venv"
     exit 1
 fi
 
@@ -61,15 +68,27 @@ fi
 
 ##### Locate an appropriate python3 interpreter
 
-PYTHON_MODULE=$(module avail python/${PYSPEC} --terse 2>&1 | grep -E python.*gcc | sort | tail -n 1)
-echo "Loading module ${PYTHON_MODULE}"
-module load ${PYTHON_MODULE}
-INTERPRETER=$(which python3)
-if [ -z $INTERPRETER ]; then
-    echo "Error: failed to find a python3 interpreter"
-    exit 1
+INTERPRETER=$(which ${PYSPEC})
+if [ -n $INTERPRETER ]; then
+    # Use a locally installed python insteady of a version spec
+    if [ -z "${GCCSPEC}" ]; then
+        echo "A gcc version (--gcc=version flag) must be specified when using a local python install"
+        exit 1
+    fi
+    echo "Using interpreter ${INTERPRETER} ($(${INTERPRETER} --version)) without modules"
+    PYTHON_MODULE=$(module avail gcc/${GCCSPEC} --terse 2>&1 | grep -E gcc | sort | tail -n 1)
 else
-    echo "Using interpreter ${INTERPRETER} ($(${INTERPRETER} --version))"
+    # Use a globally installed python, meaning modules have to be loaded
+    PYTHON_MODULE=$(module avail python/${PYSPEC} --terse 2>&1 | grep -E python.*gcc | sort | tail -n 1)
+    echo "Loading module ${PYTHON_MODULE}"
+    module load ${PYTHON_MODULE}
+    INTERPRETER=$(which python3)
+    if [ -z $INTERPRETER ]; then
+        echo "Error: failed to find a python3 interpreter"
+        exit 1
+    else
+        echo "Using interpreter ${INTERPRETER} ($(${INTERPRETER} --version))"
+    fi
 fi
 
 ##### Create virtualenv, update packaging tools, apply patches
