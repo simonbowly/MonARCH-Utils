@@ -28,6 +28,9 @@ Create a virtualenv:
     # Create a Python3.7 virtualenv and make gurobipy available in it
     mkvirtualenv --python=3.7 --gurobi=9 myGurobiVenv
 
+    # Create a virtualenv from a local python interpreter (specify compiler used for build)
+    mkvirtualenv --python=~/python/bin/python3.8 --gcc=8 py38_local
+
 Activate a virtualenv (the required python/gurobi modules are loaded automatically):
 
     # If you've loaded venvwrapper in your shell (has autocomplete for interactive shells)

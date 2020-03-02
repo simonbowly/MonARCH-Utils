@@ -6,6 +6,7 @@ THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 PYSPEC=""       # --python option
 GUROBI=""       # --gurobi option
+GCCSPEC=""      # --gcc option
 INTERPRETER=""  # full path to selected interpreter
 
 ##### Check input arguments and show help if we get confused
@@ -111,7 +112,7 @@ patch -b ${DIRECTORY}/bin/activate ${THIS_DIR}/activate.patch
 
 # Add gurobipy support if requested
 if [ -n "${GUROBI}" ]; then
-    GUROBI_MODULE=$(module avail gurobi/${GUROBI_VERSION} --terse 2>&1 | grep gurobi | sort | tail -n 1)
+    GUROBI_MODULE=$(module avail gurobi/${GUROBI} --terse 2>&1 | grep gurobi | sort | tail -n 1)
     echo "Loading module ${GUROBI_MODULE}"
     module load ${GUROBI_MODULE}
     if [ -z $GUROBI_HOME ]; then
